@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Repository - Admin Panel</title>
+<style>
+  :root {
+    --bg: #0f172a; --card: #1e293b; --accent: #22d3ee; --accent-dark: #0891b2;
+    --text: #e2e8f0; --muted: #94a3b8; --error: #f87171; --success: #4ade80;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: radial-gradient(circle at top, #1e293b, #0f172a);
+    font-family: 'Segoe UI', system-ui, sans-serif; color: var(--text); padding: 20px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  .lock-card {
+    background: #1e293b; border-radius: 16px; padding: 40px 36px; max-width: 380px;
+    margin: 80px auto; box-shadow: 0 20px 50px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.06);
+  }
+  h1 { font-size: 1.4rem; margin: 0 0 6px; text-align: center; }
+  p.subtitle { color: var(--muted); text-align: center; margin: 0 0 24px; font-size: 0.9rem; }
+  input {
+    width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+    background: #0f172a; color: var(--text); margin-bottom: 16px; font-size: 0.95rem;
+  }
+  input:focus { outline: none; border-color: var(--accent); }
+  button {
+    padding: 10px 16px; border: none; border-radius: 8px; font-weight: 600;
+    font-size: 0.85rem; cursor: pointer; transition: opacity 0.2s;
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary { width: 100%; padding: 13px; background: linear-gradient(135deg, var(--accent), var(--accent-dark)); color: #0f172a; }
+  .btn-approve { background: var(--success); color: #0f172a; margin-right: 8px; }
+  .btn-reject { background: var(--error); color: #0f172a; }
+  .btn-refresh { background: transparent; border: 1px solid rgba(255,255,255,0.15); color: var(--text); }
+  .msg { text-align: center; font-size: 0.85rem; margin-top: 16px; min-height: 18px; }
+  .msg.error { color: var(--error); }
+
+  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  header h1 { text-align: left; margin: 0; }
+
+  .req-card {
+    background: var(--card); border-radius: 12px; padding: 18px 20px; margin-bottom: 12px;
+    border: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+  }
+  .req-info .username { font-weight: 600; font-size: 1rem; }
+  .req-info .detail { color: var(--muted); font-size: 0.8rem; margin-top: 4px; }
+  .empty { text-align: center; color: var(--muted); padding: 40px 0; }
+</style>
+</head>
+<body>
+
+  <div id="lockScreen" class="lock-card">
+    <h1>Admin Panel</h1>
+    <p class="subtitle">Ilagay ang admin key para makapasok</p>
+    <input type="password" id="adminKeyInput" placeholder="Admin key">
+    <button class="btn-primary" id="unlockBtn" style="width:100%">Pasok</button>
+    <div class="msg error" id="lockMsg"></div>
+  </div>
+
+  <div id="panel" class="wrap" style="display:none">
+    <header>
+      <h1>Pending Account Requests</h1>
+      <button class="btn-refresh" id="refreshBtn">Refresh</button>
+    </header>
+    <div id="list"></div>
+  </div>
+
+<script>
+  // Palitan ng actual Web App URL mula sa Apps Script deployment mo (galing sa Code.gs)
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFNEczVhy0o54eE82bwkQw5oX3aMfEuh6J3noqDcG6-RGHTQdGnar5_aGb_9mKIll7/exec";
+
+  let adminKey = "";
+
+  const lockScreen = document.getElementById('lockScreen');
+  const panel = document.getElementById('panel');
+  const list = document.getElementById('list');
+  const lockMsg = document.getElementById('lockMsg');
+
+  document.getElementById('unlockBtn').addEventListener('click', async () => {
+    adminKey = document.getElementById('adminKeyInput').value.trim();
+    if (!adminKey) return;
+    lockMsg.textContent = "";
+    const ok = await loadPending();
+    if (ok) {
+      lockScreen.style.display = "none";
+      panel.style.display = "block";
+    }
+  });
+
+  document.getElementById('refreshBtn').addEventListener('click', loadPending);
+
+  async function callApi(body) {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(body)
+    });
+    return res.json();
+  }
+
+  async function loadPending() {
+    try {
+      const data = await callApi({ action: 'listPending', adminKey });
+      if (!data.success) {
+        lockMsg.textContent = data.message || "Mali ang admin key.";
+        return false;
+      }
+      renderList(data.requests || []);
+      return true;
+    } catch (err) {
+      lockMsg.textContent = "Hindi makonekta sa server.";
+      return false;
+    }
+  }
+
+  function renderList(requests) {
+    if (requests.length === 0) {
+      list.innerHTML = '<div class="empty">Walang pending requests sa ngayon.</div>';
+      return;
+    }
+
+    list.innerHTML = requests.map(r => `
+      <div class="req-card" data-row="${r.rowIndex}">
+        <div class="req-info">
+          <div class="username">${escapeHtml(r.username)}</div>
+          <div class="detail">Invoice: ${escapeHtml(r.invoiceNumber)} &middot; ${escapeHtml(String(r.timestamp))}</div>
+        </div>
+        <div class="req-actions">
+          <button class="btn-approve" onclick="decide(${r.rowIndex}, 'approve')">Approve</button>
+          <button class="btn-reject" onclick="decide(${r.rowIndex}, 'reject')">Reject</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function decide(rowIndex, action) {
+    const data = await callApi({ action, rowIndex, adminKey });
+    if (data.success) {
+      loadPending();
+    } else {
+      alert(data.message || "May error.");
+    }
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+</script>
+</body>
+</html>
