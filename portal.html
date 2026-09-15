@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Repository - Portal</title>
+<style>
+  :root {
+    --bg: #0f172a; --sidebar: #1e293b; --card: #1e293b; --accent: #22d3ee; --accent-dark: #0891b2;
+    --text: #e2e8f0; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+    height: 100vh; overflow: hidden;
+  }
+  .layout { display: flex; height: 100vh; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 240px; flex-shrink: 0; background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 24px 16px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 24px; }
+  .brand .logo {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+  }
+  .brand span { font-weight: 600; font-size: 1rem; }
+
+  .nav-btn {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    padding: 12px 14px; margin-bottom: 6px; border-radius: 10px;
+    background: transparent; border: none; color: var(--muted);
+    font-size: 0.92rem; font-weight: 500; text-align: left; cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .nav-btn .icon { font-size: 1.1rem; }
+  .nav-btn:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+  .nav-btn.active { background: rgba(34,211,238,0.12); color: var(--accent); }
+
+  .sidebar-footer { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); }
+  .logout-btn {
+    display: block; width: 100%; padding: 10px 14px; border-radius: 8px;
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    font-size: 0.85rem; text-align: center; text-decoration: none; cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .logout-btn:hover { border-color: rgba(248,113,113,0.4); color: #f87171; }
+
+  /* Main content */
+  .main {
+    flex: 1; display: flex; flex-direction: column; overflow: auto;
+  }
+  .main-header {
+    padding: 24px 32px; border-bottom: 1px solid var(--border);
+  }
+  .main-header h1 { font-size: 1.2rem; font-weight: 600; }
+  .main-body {
+    flex: 1; overflow: auto;
+  }
+  .empty-state {
+    height: 100%; display: flex; align-items: center; justify-content: center;
+    color: var(--muted); font-size: 0.9rem; text-align: center; padding: 40px;
+  }
+  .game-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 20px; padding: 28px 32px;
+  }
+  .game-card {
+    display: block; border-radius: 12px; overflow: hidden; cursor: pointer;
+    background: var(--card); border: 1px solid var(--border); text-decoration: none;
+    color: var(--text); transition: transform 0.15s, border-color 0.15s;
+  }
+  .game-card:hover { transform: translateY(-4px); border-color: var(--accent); }
+  .game-poster {
+    aspect-ratio: 3 / 4; display: flex; align-items: center; justify-content: center;
+    font-size: 2.4rem;
+  }
+  .game-title {
+    padding: 10px 12px; font-size: 0.85rem; font-weight: 500; text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">🎮</div>
+        <span>Game Repository</span>
+      </div>
+
+      <nav>
+        <button class="nav-btn active" data-category="online">
+          <span class="icon">🌐</span> Online Games
+        </button>
+        <button class="nav-btn" data-category="offline">
+          <span class="icon">💿</span> Offline Games
+        </button>
+        <button class="nav-btn" data-category="application">
+          <span class="icon">📦</span> Application
+        </button>
+        <button class="nav-btn" data-category="gamehouse">
+          <span class="icon">🕹️</span> GameHouse
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="login.html" class="logout-btn">Mag-logout</a>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="main-header">
+        <h1 id="categoryTitle">Online Games</h1>
+      </div>
+      <div class="main-body" id="categoryContent">
+        <div class="empty-state">Wala pang laman dito.</div>
+      </div>
+    </main>
+  </div>
+
+<script>
+  const labels = {
+    online: "Online Games",
+    offline: "Offline Games",
+    application: "Application",
+    gamehouse: "GameHouse"
+  };
+
+  // ============================================================
+  // Direktang links papunta sa FileBrowser share folders mo.
+  // Kung magbago ang tunnel URL (hal. nag-restart ang PC mo),
+  // palitan mo lang ang mga link na ito.
+  // ============================================================
+  const categoryLinks = {
+    online: "https://regulated-looked-several-beverage.trycloudflare.com/share/hqh3a891",
+    offline: "https://regulated-looked-several-beverage.trycloudflare.com/share/vCpWJtnw",
+    application: "https://regulated-looked-several-beverage.trycloudflare.com/share/vtluRYNZ",
+    gamehouse: "https://regulated-looked-several-beverage.trycloudflare.com/share/AR95Tey3"
+  };
+
+  const icons = {
+    online: "🌐",
+    offline: "💿",
+    application: "📦",
+    gamehouse: "🕹️"
+  };
+
+  const navBtns = document.querySelectorAll('.nav-btn');
+  const categoryTitle = document.getElementById('categoryTitle');
+  const categoryContent = document.getElementById('categoryContent');
+
+  function renderCategory(cat) {
+    categoryTitle.textContent = labels[cat];
+    const link = categoryLinks[cat];
+
+    categoryContent.innerHTML = `
+      <div class="empty-state" style="flex-direction: column; gap: 16px;">
+        <div style="font-size: 2.5rem;">${icons[cat]}</div>
+        <a href="${link}" target="_blank" style="
+          display: inline-block; padding: 14px 28px; border-radius: 10px;
+          background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+          color: #0f172a; font-weight: 600; text-decoration: none; font-size: 0.95rem;
+        ">Buksan ang ${escapeHtml(labels[cat])} →</a>
+      </div>`;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  navBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      navBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderCategory(btn.dataset.category);
+    });
+  });
+
+  renderCategory('online');
+</script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Repository - Mag-register</title>
+<style>
+  :root {
+    --bg: #0f172a; --card: #1e293b; --accent: #22d3ee; --accent-dark: #0891b2;
+    --text: #e2e8f0; --muted: #94a3b8; --error: #f87171;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at top, #1e293b, #0f172a);
+    font-family: 'Segoe UI', system-ui, sans-serif; color: var(--text); padding: 20px;
+  }
+  .card {
+    position: relative;
+    background: var(--card); border-radius: 16px; padding: 40px 36px; width: 100%; max-width: 400px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.06);
+  }
+  .close-btn {
+    position: absolute; top: 14px; right: 14px; width: 30px; height: 30px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    color: var(--muted); text-decoration: none; font-size: 1.1rem; line-height: 1;
+    transition: background 0.2s, color 0.2s;
+  }
+  .close-btn:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+  h1 { font-size: 1.4rem; margin: 0 0 6px; text-align: center; }
+  p.subtitle { color: var(--muted); text-align: center; margin: 0 0 24px; font-size: 0.9rem; }
+  label { display: block; font-size: 0.85rem; margin-bottom: 6px; color: var(--muted); }
+  input {
+    width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+    background: #0f172a; color: var(--text); margin-bottom: 16px; font-size: 0.95rem;
+  }
+  input:focus { outline: none; border-color: var(--accent); }
+  .hint { font-size: 0.75rem; color: var(--muted); margin: -12px 0 16px; }
+  button {
+    width: 100%; padding: 13px; border: none; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color: #0f172a; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: opacity 0.2s;
+  }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+  .msg { text-align: center; font-size: 0.85rem; margin-top: 16px; min-height: 18px; }
+  .msg.error { color: var(--error); }
+  .msg.success { color: #4ade80; }
+  .login-link { text-align: center; margin-top: 18px; font-size: 0.85rem; }
+  .login-link a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <a href="index.html" class="close-btn" aria-label="Bumalik">&times;</a>
+    <h1>Game Repository</h1>
+    <p class="subtitle">Mag-request ng account gamit ang sales invoice number mo</p>
+
+    <form id="registerForm">
+      <label for="invoiceNumber">Sales Invoice Number</label>
+      <input type="text" id="invoiceNumber" required>
+      <div class="hint">Nasa resibo/invoice na ibinigay sa'yo</div>
+
+      <label for="username">Piliin mong Username</label>
+      <input type="text" id="username" required autocomplete="username">
+
+      <label for="password">Piliin mong Password</label>
+      <input type="password" id="password" required autocomplete="new-password">
+
+      <button type="submit" id="submitBtn">Mag-submit ng Request</button>
+      <div class="msg" id="msg"></div>
+    </form>
+
+    <div class="login-link">May account ka na? <a href="login.html">Mag-login dito</a></div>
+  </div>
+
+<script>
+  // Palitan ng actual Web App URL mula sa Apps Script deployment mo (galing sa Code.gs)
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFNEczVhy0o54eE82bwkQw5oX3aMfEuh6J3noqDcG6-RGHTQdGnar5_aGb_9mKIll7/exec";
+
+  const form = document.getElementById('registerForm');
+  const btn = document.getElementById('submitBtn');
+  const msg = document.getElementById('msg');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const invoiceNumber = document.getElementById('invoiceNumber').value.trim();
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    btn.disabled = true;
+    btn.textContent = "Nagsu-submit...";
+    msg.textContent = "";
+    msg.className = "msg";
+
+    try {
+      const res = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'register', invoiceNumber, username, password })
+      });
+      const data = await res.json();
+
+      msg.textContent = data.message || (data.success ? "Naisumite na." : "May error.");
+      msg.className = data.success ? "msg success" : "msg error";
+
+      if (data.success) form.reset();
+    } catch (err) {
+      msg.textContent = "Hindi makonekta sa server. Subukan ulit.";
+      msg.className = "msg error";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Mag-submit ng Request";
+    }
+  });
+</script>
+</body>
+</html>
