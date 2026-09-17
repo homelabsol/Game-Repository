@@ -198,6 +198,12 @@
     return div.innerHTML;
   }
 
+  function formatDate(str) {
+    const d = new Date(str);
+    if (isNaN(d.getTime())) return escapeHtml(str);
+    return d.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
   async function renderLatest() {
     categoryTitle.textContent = labels.latest;
     categoryContent.innerHTML = '<div class="empty-state">Naglo-load...</div>';
@@ -221,7 +227,7 @@
             <div class="name">${escapeHtml(item.name)}</div>
             <div class="meta">
               <span class="badge">${escapeHtml(item.category)}</span>
-              <span class="date">${escapeHtml(item.dateModified)}</span>
+              <span class="date">${formatDate(item.dateModified)}</span>
             </div>
           </div>`).join('') +
         '</div>';
