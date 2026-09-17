@@ -210,6 +210,22 @@
     return d.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
   }
 
+  // Kung Google Drive share link ang na-paste (hal. .../file/d/FILE_ID/view
+  // o .../open?id=FILE_ID), awtomatikong i-convert papunta sa direct-image
+  // format para gumana bilang poster. Kung hindi Drive link, ibabalik lang
+  // as-is (para gumana rin ang ibang image URLs).
+  function toDisplayableImageUrl(url) {
+    if (!url) return url;
+
+    let match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (!match) match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+
+    if (match && match[1]) {
+      return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
+    }
+    return url;
+  }
+
   async function renderLatest() {
     categoryTitle.textContent = labels.latest;
     categoryContent.innerHTML = '<div class="empty-state">Naglo-load...</div>';
@@ -230,7 +246,7 @@
       categoryContent.innerHTML = '<div class="latest-list">' +
         data.items.map(item => {
           const posterHtml = item.posterUrl
-            ? `<img class="poster" src="${item.posterUrl}" alt="" onerror="this.outerHTML='<div class=&quot;poster&quot;>🎮</div>'">`
+            ? `<img class="poster" src="${toDisplayableImageUrl(item.posterUrl)}" alt="" onerror="this.outerHTML='<div class=&quot;poster&quot;>🎮</div>'">`
             : `<div class="poster">🎮</div>`;
           return `
           <div class="latest-item">
