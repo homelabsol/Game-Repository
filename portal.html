@@ -88,12 +88,18 @@
     padding: 20px 32px; display: flex; flex-direction: column; gap: 10px;
   }
   .latest-item {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 18px; border-radius: 10px;
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 16px; border-radius: 10px;
     background: var(--card); border: 1px solid var(--border);
   }
+  .latest-item .poster {
+    width: 56px; height: 56px; border-radius: 8px; flex-shrink: 0;
+    object-fit: cover; background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+  }
+  .latest-item .info { flex: 1; min-width: 0; }
   .latest-item .name { font-weight: 500; font-size: 0.92rem; }
-  .latest-item .meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .latest-item .meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-top: 4px; }
   .latest-item .badge {
     font-size: 0.7rem; font-weight: 600; padding: 4px 10px; border-radius: 999px;
     background: rgba(34,211,238,0.12); color: var(--accent);
@@ -222,14 +228,22 @@
       }
 
       categoryContent.innerHTML = '<div class="latest-list">' +
-        data.items.map(item => `
+        data.items.map(item => {
+          const posterHtml = item.posterUrl
+            ? `<img class="poster" src="${item.posterUrl}" alt="" onerror="this.outerHTML='<div class=&quot;poster&quot;>🎮</div>'">`
+            : `<div class="poster">🎮</div>`;
+          return `
           <div class="latest-item">
-            <div class="name">${escapeHtml(item.name)}</div>
-            <div class="meta">
-              <span class="badge">${escapeHtml(item.category)}</span>
-              <span class="date">${formatDate(item.dateModified)}</span>
+            ${posterHtml}
+            <div class="info">
+              <div class="name">${escapeHtml(item.name)}</div>
+              <div class="meta">
+                <span class="badge">${escapeHtml(item.category)}</span>
+                <span class="date">${formatDate(item.dateModified)}</span>
+              </div>
             </div>
-          </div>`).join('') +
+          </div>`;
+        }).join('') +
         '</div>';
     } catch (err) {
       categoryContent.innerHTML = '<div class="empty-state">Hindi makonekta sa server.</div>';
