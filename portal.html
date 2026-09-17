@@ -83,6 +83,22 @@
   .game-title {
     padding: 10px 12px; font-size: 0.85rem; font-weight: 500; text-align: center;
   }
+
+  .latest-list {
+    padding: 20px 32px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .latest-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; border-radius: 10px;
+    background: var(--card); border: 1px solid var(--border);
+  }
+  .latest-item .name { font-weight: 500; font-size: 0.92rem; }
+  .latest-item .meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .latest-item .badge {
+    font-size: 0.7rem; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+    background: rgba(34,211,238,0.12); color: var(--accent);
+  }
+  .latest-item .date { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -94,7 +110,10 @@
       </div>
 
       <nav>
-        <button class="nav-btn active" data-category="online">
+        <button class="nav-btn active" data-category="latest">
+          <span class="icon">🆕</span> Latest Games
+        </button>
+        <button class="nav-btn" data-category="online">
           <span class="icon">🌐</span> Online Games
         </button>
         <button class="nav-btn" data-category="offline">
@@ -125,11 +144,15 @@
 
 <script>
   const labels = {
+    latest: "Latest Games",
     online: "Online Games",
     offline: "Offline Games",
     application: "Application",
     gamehouse: "GameHouse"
   };
+
+  // Parehong Apps Script URL na ginagamit sa login/register/admin
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFNEczVhy0o54eE82bwkQw5oX3aMfEuh6J3noqDcG6-RGHTQdGnar5_aGb_9mKIll7/exec";
 
   // ============================================================
   // Direktang links papunta sa FileBrowser share folders mo.
@@ -175,15 +198,52 @@
     return div.innerHTML;
   }
 
+  async function renderLatest() {
+    categoryTitle.textContent = labels.latest;
+    categoryContent.innerHTML = '<div class="empty-state">Naglo-load...</div>';
+
+    try {
+      const res = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'getLatest' })
+      });
+      const data = await res.json();
+
+      if (!data.success || !data.items || data.items.length === 0) {
+        categoryContent.innerHTML = '<div class="empty-state">Wala pang laman dito.</div>';
+        return;
+      }
+
+      categoryContent.innerHTML = '<div class="latest-list">' +
+        data.items.map(item => `
+          <div class="latest-item">
+            <div class="name">${escapeHtml(item.name)}</div>
+            <div class="meta">
+              <span class="badge">${escapeHtml(item.category)}</span>
+              <span class="date">${escapeHtml(item.dateModified)}</span>
+            </div>
+          </div>`).join('') +
+        '</div>';
+    } catch (err) {
+      categoryContent.innerHTML = '<div class="empty-state">Hindi makonekta sa server.</div>';
+    }
+  }
+
   navBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       navBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      renderCategory(btn.dataset.category);
+      const cat = btn.dataset.category;
+      if (cat === 'latest') {
+        renderLatest();
+      } else {
+        renderCategory(cat);
+      }
     });
   });
 
-  renderCategory('online');
+  renderLatest();
 </script>
 </body>
 </html>
